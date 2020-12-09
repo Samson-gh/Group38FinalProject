@@ -1,5 +1,4 @@
 ---
-title: "Journal"
 output:
   html_document:
     toc: true
@@ -14,115 +13,220 @@ output:
 knitr::opts_chunk$set(message=FALSE,warning=FALSE, cache=TRUE)
 ```
 
-IMPORTANT: You can delete everything in here and start fresh. You might want to start by not deleting anything above this line until you know what that stuff is doing.
-
-
-This is an .Rmd file. It is plain text with special features. Any time you write just like this, it will be compiled to normal text in the website. If you put a \# in front of your text, it will create a top level-header.
-
-# My first post
-
-2018 | 7 | 23 Last compiled: `r Sys.Date()`
-
-Notice that whatever you define as a top level header, automatically gets put into the table of contents bar on the left. 
-
-## Second level header
-
-You can add more headers by adding more hashtags. These won't be put into the table of contents
-
-### third level header
-
-Here's an even lower level header
-
-# My second post (note the order)
-
-2018 | 7 | 23 Last compiled: `r Sys.Date()`
-
-I'm writing this tutorial going from the top down. And, this is how it will be printed. So, notice the second post is second in the list. If you want your most recent post to be at the top, then make a new post starting at the top. If you want the oldest first, do, then keep adding to the bottom
-
-# Adding R stuff
-
-So far this is just a blog where you can write in plain text and serve your writing to a webpage. One of the main purposes of this lab journal is to record your progress learning R. The reason I am asking you to use this process is because you can both make a website, and a lab journal, and learn R all in R-studio. This makes everything really convenient and in the sam place. 
-
-So, let's say you are learning how to make a histogram in R. For example, maybe you want to sample 100 numbers from a normal distribution with mean = 0, and standard deviation =1, and then you want to plot a histogram. You can do this right here by using an r code block, like this:
-
+```{r, render = F}
+library("caret")
+library("MPV")
+library("faraway")
+library("mltools")
+library(data.table)
+library(MASS)
+```
 ```{r}
-samples <- rnorm(100, mean=0, sd=1)
-hist(samples)
+# i already added the synthetic data point as the last row of the csv, row8129
+cardata<-read.csv("C:\\Users\\sjmif\\Downloads\\cardetailsv3withsynth.csv")
+attach(cardata)
+summary(cardata)
 ```
 
-When you knit this R Markdown document, you will see that the histogram is printed to the page, along with the R code. This document can be set up to hide the R code in the webpage, just delete the comment (hashtag), from the cold folding option in the yaml header up top. For purposes of letting yourself see the code, and me see the code, best to keep it the way that it is. You learn all of these things and more can be customized in each R code block.
-
-# The big idea
-
-Use this lab journal to record what you do in R. This way I will be able to see what you are doing and help you along the way. You will also be creating a repository of all the things you do. You can make posts about everything. Learning specific things in R (project unrelated), and doing things for the project that we will discuss at the beginning of the Fall semester. You can get started now by fiddling around with googling things, and trying stuff out in R. I've placed some helpful starting links in the links page on this website
-
-# What can you do right now by yourself?
-
-It's hard to learn programming when you don't have specific problems that you are trying to solve. Everything just seems abstract.
-
-I wrote an [introductory programming book that introduces R](https://crumplab.github.io/programmingforpsych/), and gives some [concrete problems for you to solve](https://crumplab.github.io/programmingforpsych/programming-challenges-i-learning-the-fundamentals.html). 
-
-To get the hang of journaling and solving the problems to learn programming, my suggestion is that you use this .Rmd file to solve the problems. It would look like this:
-
-# Problem 1
-
-Do simple math with numbers, addition, subtraction, multiplication, division
-
 ```{r}
-1+2
-2*5
-5/3
-(1+6+4)/5
-
+#remove NA's
+cardata<-cardata[complete.cases(cardata),]
+anyNA(cardata)
 ```
 
-# Problem 2
-
-Put numbers into variables, do simple math on the variables
-
 ```{r}
-a<-1
-b<-2
-a+b
-
-d<-c(1,2,3)
-e<-c(5,6,7)
-d+e
-d*e
-d/e
-
+#first column should now just be year.
+cardata<-data.frame(cardata[,-1])
+cardata[(1:5),1]
 ```
 
-# Problem 3
-
-Write code that will place the numbers 1 to 100 separately into a variable using for loop. Then, again using the seq function.
-
 ```{r}
-# for loop solution
-# i becomes the number 1 to 100 at each step of the loop
-
-
-a <- length(100) # make empty variable, set length to 100
-for (i in 1:100){
-  a[i] <-i #assigns the number in i, to the ith index of a
-}
-
-print(a)
-
-# for loop solution #2
-
-a<-c() #create empty variable using combine command
-for (i in 1:100){
-  a<-c(a,i) # keeps combining a with itself and the new number in i
-}
-print(a)
-
-# seq solution
-a <- seq(1,100,1) # look up help for seq using ?seq() in console
-print(a)
-
+#switch to car age
+cardata$car_age<-with(cardata,2020-cardata$year)
+#prune year column
+cardata<-data.frame(cardata[,-1])
 ```
 
-# Replace this with problem 4
+```{r}
+#cleaning columns with symbols
+cardata$max_power<-{as.numeric(gsub("[a-zA-Z/]", "",cardata$max_power))}
+cardata$engine<-{as.numeric(gsub("[a-zA-Z/]", "",cardata$engine))}
+cardata$mileage<-{as.numeric(gsub("[a-zA-Z]", "",cardata$mileage))}
+#the rows with CNG and LPG fuel are also removed by the previous line
+```
 
-And keep going. Try to solve the problems with different scripts that provide the same solution. Good luck, Happy coding.
+```{r}
+cardata<-cardata[complete.cases(cardata),]
+anyNA(cardata)
+```
+
+```{r}
+#taking out torque column
+cardata<-data.frame(cardata[,-10])
+```
+
+```{r}
+#remove rows where mileage is 0
+cardata<-cardata[!(cardata$mileage<0.001),]
+```
+
+```{r}
+#checking the data before getting logs
+summary(cardata)
+cardata$selling_price <- log(cardata$selling_price)
+cardata$km_driven <- log(cardata$km_driven)
+cardata$max_power <- log(cardata$max_power)
+#checking the data after getting logs
+summary(cardata)
+```
+
+```{r}
+# scale carData
+scaledData <- cardata
+scaledData[c(1,2,7,8,9,10,11)] <- lapply(scaledData[c(1,2,7,8,9,10,11)], function(x) c(scale(x)))
+#checking the data after unit normal scaling
+summary(scaledData)
+```
+
+```{r}
+#test train split
+set.seed(13)
+n=ceiling(0.8*length(scaledData$selling_price))
+train.sample=sample(c(1:length(scaledData$selling_price)),n)
+train.sample=sort(train.sample)
+train_data<- scaledData[train.sample, ]
+test_data <- scaledData[-train.sample, ]
+```
+
+```{r}
+#MODEL SELECTION
+#define model with all predictors
+fullModelscaledData<-lm(selling_price ~ .,data = train_data)
+```
+
+```{r}
+#stepwise bidirectional variable selection
+print('VARIABLE SELECTION STEPWISE')
+step.model.scaledData<-stepAIC(fullModelscaledData,direction = "both", trace = F)
+summary(step.model.scaledData)
+select.mod.scaledData<-step(fullModelscaledData)
+print('VIFs')
+vif(select.mod.scaledData)
+print('Condition Number')
+kappa(select.mod.scaledData)
+print('Confidence Interval of Coefficients')
+confint(select.mod.scaledData)
+```
+
+```{r}
+plot(select.mod.scaledData, which=1, col=c("blue")) # Residuals vs Fitted Plot
+plot(select.mod.scaledData, which=2, col=c("red"))  # Q-Q Plot
+plot(select.mod.scaledData, which=3, col=c("blue"))  # Scale-Location Plot
+plot(select.mod.scaledData, which=5, col=c("blue"))  # Residuals vs Leverage
+```
+
+```{r}
+cooksd <- cooks.distance(select.mod.scaledData)
+print('the largest cooks distance is')
+max(cooksd)
+print('the average cooks distance is')
+mean(cooksd)
+
+# Plot the Cook's Distance using the traditional 4/n criterion
+plot(cooksd, pch="*", cex=2, main="Influential Obs by Cooks distance")  # plot cook's distance
+abline(h = 4/nrow(train_data), col="red")  # add cutoff line
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4/nrow(train_data), names(cooksd),""), col="red")  # add labels
+```
+
+```{r}
+influential <- as.numeric(names(cooksd)[(cooksd > 4 * mean(cooksd, na.rm = TRUE))]) 
+length(influential)
+```
+                                         
+```{r}
+# backward variable selection
+print('BACKWARD SELECTION')
+step.backward.model.scaledData<-stepAIC(fullModelscaledData,selection = "backward", trace = F)
+summary(step.backward.model.scaledData)
+```
+
+```{r}
+#forward variable selection
+print('FORWARD SELECTION')
+intercept.only.model.scaledData<-lm(selling_price~1,data = train_data)
+stepAIC(intercept.only.model.scaledData,direction = "forward")
+step.forward.model.scaledData<-stepAIC(intercept.only.model.scaledData,selection = "forward")
+summary(step.forward.model.scaledData)
+print('VIFs')
+print(vif(step.forward.model.scaledData))
+print('conditionNumber')
+print(kappa(step.forward.model.scaledData))
+```
+
+```{r}
+# compare the selected model and the model where we remove engine
+print('Comparing the selected model and the model with engine removed')
+noEngineModel <- lm(formula = selling_price ~ km_driven + fuel + seller_type + transmission + owner + mileage + max_power + seats + car_age, data = train_data)
+summary(noEngineModel)
+vif(noEngineModel)
+kappa(noEngineModel)
+#test whther coefficient of quadratic and interaction terms are significant
+anova(noEngineModel,select.mod.scaledData) # List the least complex model first
+```
+
+```{r}
+train_data[6243,]
+# remove the outlier
+print('Removing the synthetic data point')
+#full model
+model.outlier8129removed <- lm(formula = selling_price ~ km_driven + fuel + seller_type + transmission + owner + mileage + engine + max_power + seats + car_age, data = train_data,subset=1:6242)
+summary(model.outlier8129removed)
+vif(model.outlier8129removed)
+kappa(model.outlier8129removed)
+plot(model.outlier8129removed, which=1, col=c("blue")) # Residuals vs Fitted Plot
+plot(model.outlier8129removed, which=2, col=c("red"))  # Q-Q Plot
+plot(model.outlier8129removed, which=3, col=c("blue"))  # Scale-Location Plot
+plot(model.outlier8129removed, which=5, col=c("blue"))  # Residuals vs Leverage
+```
+
+```{r}
+#stepwise bidirectional variable selection
+print('VARIABLE SELECTION STEPWISE')
+step.model.outlier8129removed<-stepAIC(model.outlier8129removed,direction = "both", trace = F)
+summary(step.model.outlier8129removed)
+select.mod.outlier8129removed<-step(step.model.outlier8129removed)
+print('VIFs')
+vif(step.model.outlier8129removed)
+print('Condition Number')
+kappa(step.model.outlier8129removed)
+print('Confidence Interval of Coefficients')
+confint(select.mod.scaledData)
+```
+
+
+```{r}
+noEngineModel.outlier8129removed <- lm(formula = selling_price ~ km_driven + fuel + seller_type + transmission + owner + mileage + max_power + seats + car_age, data = train_data,subset=1:6242)
+summary(noEngineModel.outlier8129removed)
+vif(noEngineModel.outlier8129removed)
+kappa(noEngineModel.outlier8129removed)
+#test whether the adding the engine predictor is significant when compared to the no engine model
+anova(noEngineModel.outlier8129removed,step.model.outlier8129removed) # List the least complex model first
+```
+
+```{r}
+Noenginepreds<-predict(noEngineModel.outlier8129removed,test_data)
+fullmodelpreds<-predict(model.outlier8129removed,test_data)
+selectmodelpreds<-predict(select.mod.outlier8129removed,test_data)
+```
+
+```{r}
+plot(test_data$selling_price,Noenginepreds,abline(c(0,1)), xlab = "actual", ylab = "predicted")
+plot(test_data$selling_price,fullmodelpreds,abline(c(0,1)), xlab = "actual", ylab = "predicted")
+plot(test_data$selling_price,selectmodelpreds,abline(c(0,1)), xlab = "actual", ylab = "predicted")
+RMSE1<-sqrt(sum((Noenginepreds-test_data$selling_price)^2)/length(Noenginepreds))
+print(RMSE1)
+RMSE2<-sqrt(sum((fullmodelpreds-test_data$selling_price)^2)/length(fullmodelpreds))
+print(RMSE2)
+RMSE3<-sqrt(sum((selectmodelpreds-test_data$selling_price)^2)/length(selectmodelpreds))
+print(RMSE3)
+```
