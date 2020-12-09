@@ -1,1 +1,10 @@
 base
+lattice
+ggplot2
+caret
+KernSmooth
+MPV
+faraway
+mltools
+data.table
+MASS

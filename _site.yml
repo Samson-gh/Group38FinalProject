@@ -1,10 +1,10 @@
-name: "MyLabJournal"
+name: "Group 38's Final Project"
 navbar:
-  title: "MyLabJournal"
+  title: "Group 38's Final Project"
   left:
     - text: "Home"
       href: index.html
-    - text: "Journal"
+    - text: "Calculations and Plots"
       href: Journal.html
     - text: "Links"
       href: Links.html
